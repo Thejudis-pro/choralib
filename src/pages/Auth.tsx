@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,25 +29,47 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  // Handle password reset/invitation flow
+  // Handle email confirmation/invitation flow
   useEffect(() => {
     const handleAuthFlow = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const type = urlParams.get('type');
+      const url = new URL(window.location.href);
+      const accessToken = url.searchParams.get('access_token');
+      const refreshToken = url.searchParams.get('refresh_token');
+      const type = url.searchParams.get('type');
+      
+      // Handle tokens from email links
+      if (accessToken && refreshToken) {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (!error) {
+            toast({
+              title: 'Welcome!',
+              description: 'Your account has been verified. Redirecting to dashboard...',
+            });
+            // Clean up URL
+            window.history.replaceState({}, document.title, '/auth');
+            setTimeout(() => navigate('/dashboard'), 1000);
+            return;
+          }
+        } catch (error) {
+          console.error('Error setting session:', error);
+        }
+      }
       
       if (type === 'invite' || type === 'recovery') {
-        // For invitations and password resets, show appropriate message
-        if (type === 'invite') {
-          toast({
-            title: 'Welcome!',
-            description: 'Please set your password to complete your account setup.',
-          });
-        }
+        toast({
+          title: 'Welcome!',
+          description: 'Please set your password to complete your account setup.',
+        });
       }
     };
 
     handleAuthFlow();
-  }, []);
+  }, [navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

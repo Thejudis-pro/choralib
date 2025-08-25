@@ -38,7 +38,7 @@ const InviteUserDialog = ({ onUserInvited, children }: InviteUserDialogProps) =>
           full_name: email.split('@')[0], // Use email prefix as default name
           role: role
         },
-        redirectTo: `${window.location.origin}/auth`
+        redirectTo: `${window.location.protocol}//${window.location.hostname}:8080/auth`
       });
 
       if (error) {
