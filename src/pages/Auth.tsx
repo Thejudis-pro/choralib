@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,34 @@ const Auth = () => {
     role: 'member' as 'member' | 'admin'
   });
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  // Handle password reset/invitation flow
+  useEffect(() => {
+    const handleAuthFlow = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const type = urlParams.get('type');
+      
+      if (type === 'invite' || type === 'recovery') {
+        // For invitations and password resets, show appropriate message
+        if (type === 'invite') {
+          toast({
+            title: 'Welcome!',
+            description: 'Please set your password to complete your account setup.',
+          });
+        }
+      }
+    };
+
+    handleAuthFlow();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

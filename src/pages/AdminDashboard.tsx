@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Music, Plus, Users, Crown, LogOut, BarChart3, FileText } from 'lucide-react';
+import { Music, Plus, Users, Crown, LogOut, BarChart3, FileText, UserPlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import CreateChoirDialog from '@/components/CreateChoirDialog';
+import InviteUserDialog from '@/components/InviteUserDialog';
 
 interface Choir {
   id: string;
@@ -137,6 +138,12 @@ const AdminDashboard = () => {
             <span className="text-2xl font-bold">ChoraLib Admin</span>
           </div>
           <div className="flex items-center gap-4">
+            <InviteUserDialog onUserInvited={refreshData}>
+              <Button variant="outline" size="sm">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite User
+              </Button>
+            </InviteUserDialog>
             <div className="text-right">
               <p className="text-sm font-medium">{profile?.full_name || 'Admin'}</p>
               <div className="flex items-center gap-2">
