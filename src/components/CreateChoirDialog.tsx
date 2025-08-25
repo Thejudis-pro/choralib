@@ -48,15 +48,15 @@ const CreateChoirDialog = ({ onChoirCreated, children }: CreateChoirDialogProps)
 
     setLoading(true);
     try {
-      // The trigger will automatically generate the code
+      // The trigger will automatically generate the code, we provide a temporary value
       const { data, error } = await supabase
         .from('choirs')
-        .insert([{
+        .insert({
           name: formData.name.trim(),
           description: formData.description.trim() || null,
           admin_id: user?.id,
-          code: '' // Will be overridden by trigger
-        }])
+          code: 'TEMP' // This will be overridden by the database trigger
+        })
         .select()
         .single();
 
