@@ -20,10 +20,6 @@ const Dashboard = () => {
 
   // Route to appropriate dashboard based on user role
   if (profile?.role === 'admin') {
-    // Check if admin has active subscription for big library access
-    if (!profile.subscription_active) {
-      return <Navigate to="/pricing" replace />;
-    }
     return <AdminDashboard />;
   } else {
     return <MemberDashboard />;
