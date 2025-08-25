@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { Music } from 'lucide-react';
 
@@ -17,6 +19,7 @@ const Auth = () => {
     email: '',
     password: '',
     fullName: '',
+    role: 'member' as 'admin' | 'member',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -63,7 +66,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.fullName);
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.role);
     
     if (error) {
       if (error.message.includes('already registered')) {
@@ -175,6 +178,26 @@ const Auth = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                   />
+                </div>
+                <div className="space-y-3">
+                  <Label>Account Type</Label>
+                  <RadioGroup
+                    value={formData.role}
+                    onValueChange={(value) => handleInputChange('role', value)}
+                    className="grid grid-cols-2 gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="member" id="member" />
+                      <Label htmlFor="member" className="cursor-pointer">Member</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="admin" id="admin" />
+                      <Label htmlFor="admin" className="cursor-pointer">Admin</Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-sm text-muted-foreground">
+                    Admins can create choirs and manage partitions. Members can join choirs.
+                  </p>
                 </div>
                 <Button 
                   onClick={handleSignUp} 
