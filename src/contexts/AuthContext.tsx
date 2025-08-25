@@ -104,6 +104,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
     });
+    
+    if (!error) {
+      // Refresh profile after successful sign in to ensure we have the latest data
+      setTimeout(refreshProfile, 100);
+    }
+    
     return { error };
   };
 
