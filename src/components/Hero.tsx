@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Music, Users, Shield, Star } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
@@ -61,11 +62,11 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button variant="hero" size="lg" className="min-w-48">
-              Start as Admin
+            <Button asChild variant="hero" size="lg" className="min-w-48">
+              <Link to="/auth">Start as Admin</Link>
             </Button>
-            <Button variant="member" size="lg" className="min-w-48">
-              Join a Choir
+            <Button asChild variant="member" size="lg" className="min-w-48">
+              <Link to="/auth">Join a Choir</Link>
             </Button>
           </div>
           
