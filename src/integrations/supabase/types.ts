@@ -14,16 +14,199 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      choir_members: {
+        Row: {
+          choir_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          choir_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          choir_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "choir_members_choir_id_fkey"
+            columns: ["choir_id"]
+            isOneToOne: false
+            referencedRelation: "choirs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      choirs: {
+        Row: {
+          admin_id: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          partition_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partition_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partition_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_partition_id_fkey"
+            columns: ["partition_id"]
+            isOneToOne: false
+            referencedRelation: "partitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partitions: {
+        Row: {
+          choir_id: string | null
+          composer: string | null
+          created_at: string
+          file_hash: string
+          file_path: string
+          file_size: number | null
+          id: string
+          is_big_library: boolean
+          tags: string[] | null
+          title: string
+          updated_at: string
+          uploaded_by: string
+          voice_type: Database["public"]["Enums"]["voice_type"]
+        }
+        Insert: {
+          choir_id?: string | null
+          composer?: string | null
+          created_at?: string
+          file_hash: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_big_library?: boolean
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          uploaded_by: string
+          voice_type?: Database["public"]["Enums"]["voice_type"]
+        }
+        Update: {
+          choir_id?: string | null
+          composer?: string | null
+          created_at?: string
+          file_hash?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_big_library?: boolean
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          voice_type?: Database["public"]["Enums"]["voice_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partitions_choir_id_fkey"
+            columns: ["choir_id"]
+            isOneToOne: false
+            referencedRelation: "choirs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          subscription_active: boolean
+          subscription_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          subscription_active?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          subscription_active?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_choir_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "member"
+      voice_type: "soprano" | "alto" | "tenor" | "bass" | "all"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +333,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "member"],
+      voice_type: ["soprano", "alto", "tenor", "bass", "all"],
+    },
   },
 } as const
