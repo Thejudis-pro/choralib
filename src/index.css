@@ -173,4 +173,8 @@
   .shadow-large {
     box-shadow: var(--shadow-large);
   }
+  
+  .shadow-elegant {
+    box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+  }
 }

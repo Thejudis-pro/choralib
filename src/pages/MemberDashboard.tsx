@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Music, Plus, BookOpen, LogOut, Download, Heart } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import JoinChoirDialog from '@/components/JoinChoirDialog';
 
 interface Choir {
   id: string;
@@ -74,6 +75,33 @@ const MemberDashboard = () => {
     fetchMemberData();
   }, [user, profile]);
 
+  const refreshData = () => {
+    if (user && profile) {
+      setLoadingChoirs(true);
+      const fetchMemberData = async () => {
+        try {
+          const { data: memberData, error: memberError } = await supabase
+            .from('choir_members')
+            .select(`
+              choir_id,
+              choirs (*)
+            `)
+            .eq('user_id', user.id);
+
+          if (memberError) throw memberError;
+          
+          const memberChoirsList = memberData?.map((membership: ChoirMembership) => membership.choirs) || [];
+          setMemberChoirs(memberChoirsList);
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        } finally {
+          setLoadingChoirs(false);
+        }
+      };
+      fetchMemberData();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -126,10 +154,7 @@ const MemberDashboard = () => {
         <section className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">My Choirs</h2>
-            <Button variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Join Choir
-            </Button>
+            <JoinChoirDialog onChoirJoined={refreshData} />
           </div>
           
           {loadingChoirs ? (
@@ -178,10 +203,12 @@ const MemberDashboard = () => {
                 <p className="text-muted-foreground mb-4">
                   Join a choir using an invitation code to access partitions and practice materials
                 </p>
-                <Button variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Join Your First Choir
-                </Button>
+                <JoinChoirDialog onChoirJoined={refreshData}>
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Join Your First Choir
+                  </Button>
+                </JoinChoirDialog>
               </CardContent>
             </Card>
           )}

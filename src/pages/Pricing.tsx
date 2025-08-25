@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Music } from "lucide-react";
+import { toast } from '@/hooks/use-toast';
 
 const Pricing = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   const handleSubscribe = () => {
-    // TODO: Implement Stripe integration here
-    console.log('Starting subscription process...');
+    toast({
+      title: "Subscription Coming Soon",
+      description: "Payment integration will be available soon. For now, admin features are accessible.",
+    });
+    navigate('/dashboard');
   };
 
   const handleBackToDashboard = () => {

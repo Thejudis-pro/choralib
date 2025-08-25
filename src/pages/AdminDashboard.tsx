@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Music, Plus, Users, Crown, LogOut, BarChart3, FileText } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import CreateChoirDialog from '@/components/CreateChoirDialog';
 
 interface Choir {
   id: string;
@@ -83,6 +84,29 @@ const AdminDashboard = () => {
 
     fetchAdminData();
   }, [user, profile]);
+
+  const refreshData = () => {
+    if (user && profile) {
+      setLoadingChoirs(true);
+      const fetchAdminData = async () => {
+        try {
+          const { data: choirsData, error: choirsError } = await supabase
+            .from('choirs')
+            .select('*')
+            .eq('admin_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (choirsError) throw choirsError;
+          setChoirs(choirsData || []);
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        } finally {
+          setLoadingChoirs(false);
+        }
+      };
+      fetchAdminData();
+    }
+  };
 
   if (loading) {
     return (
@@ -175,10 +199,7 @@ const AdminDashboard = () => {
         <section className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Your Choirs</h2>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Choir
-            </Button>
+            <CreateChoirDialog onChoirCreated={refreshData} />
           </div>
 
           {loadingChoirs ? (
@@ -228,10 +249,12 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground mb-4">
                   Create your first choir to start managing partitions and members
                 </p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Choir
-                </Button>
+                <CreateChoirDialog onChoirCreated={refreshData}>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Choir
+                  </Button>
+                </CreateChoirDialog>
               </CardContent>
             </Card>
           )}
