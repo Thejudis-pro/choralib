@@ -38,6 +38,7 @@ interface Partition {
   choir_id: string | null;
   is_big_library: boolean;
   is_favorited?: boolean;
+  is_downloaded?: boolean;
 }
 
 interface Choir {
@@ -53,6 +54,7 @@ const PartitionManagement = () => {
   const [choirs, setChoirs] = useState<Choir[]>([]);
   const [currentChoir, setCurrentChoir] = useState<Choir | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [downloads, setDownloads] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterVoiceType, setFilterVoiceType] = useState('all');
@@ -132,13 +134,23 @@ const PartitionManagement = () => {
       const favoriteIds = new Set(favoritesData?.map(f => f.partition_id) || []);
       setFavorites(favoriteIds);
 
-      // Add favorite status to partitions
-      const partitionsWithFavorites = partitionsData?.map(p => ({
+      // Fetch user's downloads
+      const { data: downloadsData } = await supabase
+        .from('downloads')
+        .select('partition_id')
+        .eq('user_id', user.id);
+
+      const downloadIds = new Set(downloadsData?.map(d => d.partition_id) || []);
+      setDownloads(downloadIds);
+
+      // Add favorite and download status to partitions
+      const partitionsWithStatus = partitionsData?.map(p => ({
         ...p,
-        is_favorited: favoriteIds.has(p.id)
+        is_favorited: favoriteIds.has(p.id),
+        is_downloaded: downloadIds.has(p.id)
       })) || [];
 
-      setPartitions(partitionsWithFavorites);
+      setPartitions(partitionsWithStatus);
 
     } catch (error: any) {
       console.error('Error fetching data:', error);
@@ -193,34 +205,36 @@ const PartitionManagement = () => {
     }
   };
 
-  const downloadPartition = async (partition: Partition) => {
+  const unlockPartition = async (partition: Partition) => {
+    if (!user) return;
+
     try {
-      const { data, error } = await supabase.storage
-        .from('partition-files')
-        .download(partition.file_path);
+      // Record the download/unlock in the database
+      const { error } = await supabase
+        .from('downloads')
+        .insert({
+          user_id: user.id,
+          partition_id: partition.id
+        });
 
       if (error) throw error;
 
-      // Create download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${partition.title}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Update local state
+      setDownloads(prev => new Set(prev).add(partition.id));
+      setPartitions(prev => prev.map(p => 
+        p.id === partition.id ? { ...p, is_downloaded: true } : p
+      ));
 
       toast({
-        title: "Download started",
-        description: `Downloading "${partition.title}"`
+        title: "Partition unlocked",
+        description: `"${partition.title}" is now available for viewing`
       });
 
     } catch (error: any) {
-      console.error('Download error:', error);
+      console.error('Unlock error:', error);
       toast({
-        title: "Download failed",
-        description: error.message || "Failed to download file",
+        title: "Unlock failed",
+        description: error.message || "Failed to unlock partition",
         variant: "destructive"
       });
     }
@@ -424,6 +438,11 @@ const PartitionManagement = () => {
                     {partition.is_big_library && (
                       <Badge variant="default">Big Library</Badge>
                     )}
+                    {partition.is_downloaded && (
+                      <Badge variant="outline" className="border-green-500 text-green-700">
+                        Unlocked
+                      </Badge>
+                    )}
                   </div>
 
                   {partition.tags && partition.tags.length > 0 && (
@@ -452,24 +471,27 @@ const PartitionManagement = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadPartition(partition)}
-                      className="flex-1 gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => window.open(`/partition/${partition.id}`, '_blank')}
-                      className="flex-1 gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View
-                    </Button>
+                    {!partition.is_downloaded ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => unlockPartition(partition)}
+                        className="flex-1 gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Unlock
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => window.open(`/partition/${partition.id}`, '_blank')}
+                        className="flex-1 gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        View
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
