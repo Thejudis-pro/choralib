@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   Crown, 
   Users, 
@@ -79,9 +80,11 @@ const Features = () => {
                 </div>
               </div>
               
-              <Button variant="admin" className="w-full mt-6">
-                Start as Admin - $99/year
-              </Button>
+              <Link to="/auth">
+                <Button variant="admin" className="w-full mt-6 hover:scale-105 transition-transform duration-200">
+                  Start as Admin - $99/year
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -143,9 +146,11 @@ const Features = () => {
                 </div>
               </div>
               
-              <Button variant="member" className="w-full mt-6">
-                Join a Choir - Free
-              </Button>
+              <Link to="/auth">
+                <Button variant="member" className="w-full mt-6 hover:scale-105 transition-transform duration-200">
+                  Join a Choir - Free
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
