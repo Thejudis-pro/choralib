@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import PDFViewer from '@/components/PDFViewer';
 
 interface Partition {
   id: string;
@@ -248,32 +249,29 @@ const PartitionDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* PDF Preview */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Partition Preview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {previewUrl ? (
-                  <div className="w-full h-[600px] border rounded-lg overflow-hidden">
-                    <iframe
-                      src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                      className="w-full h-full"
-                      title={`Preview of ${partition.title}`}
-                    />
-                  </div>
-                ) : (
+            {previewUrl ? (
+              <PDFViewer 
+                url={previewUrl} 
+                title={`${partition.title} - Preview`}
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Partition Preview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="w-full h-[600px] border rounded-lg flex items-center justify-center bg-muted">
                     <div className="text-center">
                       <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">Loading preview...</p>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Partition Details */}

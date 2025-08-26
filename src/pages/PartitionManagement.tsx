@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -420,15 +420,16 @@ const PartitionManagement = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => window.open(`/partition/${partition.id}`, '_blank')}
-                      className="flex-1 gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View
-                    </Button>
+                    <Link to={`/partition/${partition.id}`} className="flex-1">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        View
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
