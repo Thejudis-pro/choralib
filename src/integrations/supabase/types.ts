@@ -203,6 +203,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_choir_admin: {
+        Args: { choir_id: string; user_id: string }
+        Returns: boolean
+      }
+      is_choir_member: {
+        Args: { choir_id: string; user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "admin" | "member"
