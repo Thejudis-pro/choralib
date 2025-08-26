@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Users, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Pricing = () => {
   return (
@@ -52,9 +53,11 @@ const Pricing = () => {
                   <span>Mobile & web access</span>
                 </li>
               </ul>
-              <Button variant="member" className="w-full">
-                Join as Singer
-              </Button>
+              <Link to="/auth">
+                <Button variant="member" className="w-full">
+                  Join as Singer
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -111,16 +114,18 @@ const Pricing = () => {
                   <span>Priority support</span>
                 </li>
               </ul>
-              <Button variant="admin" className="w-full">
-                Start Managing Choirs
-              </Button>
+              <Link to="/auth">
+                <Button variant="admin" className="w-full">
+                  Start Managing Choirs
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
 
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
-            Need help choosing? <Button variant="link" className="p-0 h-auto">Contact our team</Button>
+            Need help choosing? <a href="mailto:support@choralib.com"><Button variant="link" className="p-0 h-auto">Contact our team</Button></a>
           </p>
         </div>
       </div>
