@@ -21,7 +21,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string, fullName?: string, role?: 'admin' | 'member') => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (userId?: string) => Promise<Profile | null | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,14 +40,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshProfile = async () => {
-    if (!user) return;
+  const refreshProfile = async (userId?: string) => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) return;
     
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .maybeSingle();
 
       if (error) {
@@ -56,23 +57,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setProfile(data);
+      return data;
     } catch (error) {
       console.error('Error refreshing profile:', error);
+      return null;
     }
   };
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetch to avoid potential recursion
-          setTimeout(() => {
-            refreshProfile();
-          }, 0);
+          // Fetch profile immediately without setTimeout
+          refreshProfile(session.user.id);
         } else {
           setProfile(null);
         }
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        refreshProfile();
+        refreshProfile(session.user.id);
       }
       setLoading(false);
     });
@@ -106,8 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     
     if (!error) {
-      // Refresh profile after successful sign in to ensure we have the latest data
-      setTimeout(refreshProfile, 100);
+      // Profile will be refreshed by auth state change listener
     }
     
     return { error };
