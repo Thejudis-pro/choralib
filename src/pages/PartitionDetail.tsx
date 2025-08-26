@@ -54,6 +54,12 @@ const PartitionDetail = () => {
     }
   }, [user, id]);
 
+  useEffect(() => {
+    if (partition && hasDownloaded && !previewUrl) {
+      generatePreviewUrl();
+    }
+  }, [partition, hasDownloaded, previewUrl]);
+
   const fetchPartition = async () => {
     if (!id) return;
 
@@ -102,21 +108,6 @@ const PartitionDetail = () => {
 
       setPartition(partitionData);
 
-      // Only generate preview URL if user has downloaded the partition
-      if (hasDownloaded) {
-        try {
-          const { data: urlData, error: urlError } = await supabase.storage
-            .from('partition-files')
-            .createSignedUrl(data.file_path, 3600); // 1 hour expiry
-
-          if (!urlError && urlData) {
-            setPreviewUrl(urlData.signedUrl);
-          }
-        } catch (urlError) {
-          console.error('Failed to generate preview URL:', urlError);
-        }
-      }
-
     } catch (error: any) {
       console.error('Error fetching partition:', error);
       toast({
@@ -164,6 +155,27 @@ const PartitionDetail = () => {
       }
     } catch (error) {
       console.error('Error checking download status:', error);
+    }
+  };
+
+  const generatePreviewUrl = async () => {
+    if (!partition) return;
+    
+    try {
+      console.log('Generating preview URL for file path:', partition.file_path);
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('partition-files')
+        .createSignedUrl(partition.file_path, 3600); // 1 hour expiry
+
+      console.log('URL generation result:', { urlData, urlError });
+      if (!urlError && urlData) {
+        setPreviewUrl(urlData.signedUrl);
+        console.log('Preview URL set:', urlData.signedUrl);
+      } else {
+        console.error('URL generation failed:', urlError);
+      }
+    } catch (urlError) {
+      console.error('Failed to generate preview URL:', urlError);
     }
   };
 
@@ -223,17 +235,7 @@ const PartitionDetail = () => {
       setHasDownloaded(true);
 
       // Generate preview URL after unlocking
-      try {
-        const { data: urlData, error: urlError } = await supabase.storage
-          .from('partition-files')
-          .createSignedUrl(partition.file_path, 3600); // 1 hour expiry
-
-        if (!urlError && urlData) {
-          setPreviewUrl(urlData.signedUrl);
-        }
-      } catch (urlError) {
-        console.error('Failed to generate preview URL:', urlError);
-      }
+      await generatePreviewUrl();
 
       toast({
         title: "Partition unlocked",
