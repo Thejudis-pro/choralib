@@ -73,27 +73,6 @@ export type Database = {
         }
         Relationships: []
       }
-      downloads: {
-        Row: {
-          downloaded_at: string
-          id: string
-          partition_id: string
-          user_id: string
-        }
-        Insert: {
-          downloaded_at?: string
-          id?: string
-          partition_id: string
-          user_id: string
-        }
-        Update: {
-          downloaded_at?: string
-          id?: string
-          partition_id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       favorites: {
         Row: {
           created_at: string

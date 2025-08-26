@@ -43,22 +43,19 @@ const PartitionDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [hasDownloaded, setHasDownloaded] = useState(false);
-  const [isUnlocking, setIsUnlocking] = useState(false);
 
   useEffect(() => {
     if (user && id) {
       fetchPartition();
       checkFavoriteStatus();
-      checkDownloadStatus();
     }
   }, [user, id]);
 
   useEffect(() => {
-    if (partition && hasDownloaded && !previewUrl) {
+    if (partition && !previewUrl) {
       generatePreviewUrl();
     }
-  }, [partition, hasDownloaded, previewUrl]);
+  }, [partition, previewUrl]);
 
   const fetchPartition = async () => {
     if (!id) return;
@@ -139,43 +136,21 @@ const PartitionDetail = () => {
     }
   };
 
-  const checkDownloadStatus = async () => {
-    if (!user || !id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('downloads')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('partition_id', id)
-        .maybeSingle();
-
-      if (!error) {
-        setHasDownloaded(!!data);
-      }
-    } catch (error) {
-      console.error('Error checking download status:', error);
-    }
-  };
 
   const generatePreviewUrl = async () => {
     if (!partition) return;
     
     try {
-      console.log('Generating preview URL for file path:', partition.file_path);
-      const { data: urlData, error: urlError } = await supabase.storage
+      // Since bucket is now public, generate a public URL
+      const { data } = supabase.storage
         .from('partition-files')
-        .createSignedUrl(partition.file_path, 3600); // 1 hour expiry
-
-      console.log('URL generation result:', { urlData, urlError });
-      if (!urlError && urlData) {
-        setPreviewUrl(urlData.signedUrl);
-        console.log('Preview URL set:', urlData.signedUrl);
-      } else {
-        console.error('URL generation failed:', urlError);
+        .getPublicUrl(partition.file_path);
+        
+      if (data?.publicUrl) {
+        setPreviewUrl(data.publicUrl);
       }
-    } catch (urlError) {
-      console.error('Failed to generate preview URL:', urlError);
+    } catch (error) {
+      console.error('Failed to generate preview URL:', error);
     }
   };
 
@@ -216,43 +191,6 @@ const PartitionDetail = () => {
     }
   };
 
-  const unlockPartition = async () => {
-    if (!partition || !user) return;
-
-    try {
-      setIsUnlocking(true);
-
-      // Record the download/unlock in the database
-      const { error } = await supabase
-        .from('downloads')
-        .insert({
-          user_id: user.id,
-          partition_id: partition.id
-        });
-
-      if (error) throw error;
-
-      setHasDownloaded(true);
-
-      // Generate preview URL after unlocking
-      await generatePreviewUrl();
-
-      toast({
-        title: "Partition unlocked",
-        description: `"${partition.title}" is now available for viewing`
-      });
-
-    } catch (error: any) {
-      console.error('Unlock error:', error);
-      toast({
-        title: "Unlock failed",
-        description: error.message || "Failed to unlock partition",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUnlocking(false);
-    }
-  };
 
   if (loading || isLoading) {
     return (
@@ -318,7 +256,7 @@ const PartitionDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {hasDownloaded && previewUrl ? (
+                {previewUrl ? (
                   <div className="w-full h-[600px] border rounded-lg overflow-hidden">
                     <iframe
                       src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
@@ -330,19 +268,7 @@ const PartitionDetail = () => {
                   <div className="w-full h-[600px] border rounded-lg flex items-center justify-center bg-muted">
                     <div className="text-center">
                       <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-2">
-                        {hasDownloaded ? 'Loading preview...' : 'Unlock this partition to view it'}
-                      </p>
-                      {!hasDownloaded && (
-                        <Button 
-                          onClick={unlockPartition}
-                          disabled={isUnlocking}
-                          className="mt-4 gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          {isUnlocking ? 'Unlocking...' : 'Unlock to View'}
-                        </Button>
-                      )}
+                      <p className="text-muted-foreground">Loading preview...</p>
                     </div>
                   </div>
                 )}
@@ -358,22 +284,6 @@ const PartitionDetail = () => {
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {!hasDownloaded ? (
-                  <Button 
-                    onClick={unlockPartition}
-                    disabled={isUnlocking}
-                    className="w-full gap-2"
-                    variant="default"
-                  >
-                    <Download className="h-4 w-4" />
-                    {isUnlocking ? 'Unlocking...' : 'Unlock to View'}
-                  </Button>
-                ) : (
-                  <div className="text-center text-sm text-muted-foreground">
-                    Partition unlocked - view above
-                  </div>
-                )}
-                
                 <Button 
                   onClick={toggleFavorite}
                   variant="outline"

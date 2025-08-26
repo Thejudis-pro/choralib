@@ -38,7 +38,6 @@ interface Partition {
   choir_id: string | null;
   is_big_library: boolean;
   is_favorited?: boolean;
-  is_downloaded?: boolean;
 }
 
 interface Choir {
@@ -54,7 +53,6 @@ const PartitionManagement = () => {
   const [choirs, setChoirs] = useState<Choir[]>([]);
   const [currentChoir, setCurrentChoir] = useState<Choir | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [downloads, setDownloads] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterVoiceType, setFilterVoiceType] = useState('all');
@@ -134,20 +132,10 @@ const PartitionManagement = () => {
       const favoriteIds = new Set(favoritesData?.map(f => f.partition_id) || []);
       setFavorites(favoriteIds);
 
-      // Fetch user's downloads
-      const { data: downloadsData } = await supabase
-        .from('downloads')
-        .select('partition_id')
-        .eq('user_id', user.id);
-
-      const downloadIds = new Set(downloadsData?.map(d => d.partition_id) || []);
-      setDownloads(downloadIds);
-
-      // Add favorite and download status to partitions
+      // Add favorite status to partitions
       const partitionsWithStatus = partitionsData?.map(p => ({
         ...p,
-        is_favorited: favoriteIds.has(p.id),
-        is_downloaded: downloadIds.has(p.id)
+        is_favorited: favoriteIds.has(p.id)
       })) || [];
 
       setPartitions(partitionsWithStatus);
@@ -205,40 +193,6 @@ const PartitionManagement = () => {
     }
   };
 
-  const unlockPartition = async (partition: Partition) => {
-    if (!user) return;
-
-    try {
-      // Record the download/unlock in the database
-      const { error } = await supabase
-        .from('downloads')
-        .insert({
-          user_id: user.id,
-          partition_id: partition.id
-        });
-
-      if (error) throw error;
-
-      // Update local state
-      setDownloads(prev => new Set(prev).add(partition.id));
-      setPartitions(prev => prev.map(p => 
-        p.id === partition.id ? { ...p, is_downloaded: true } : p
-      ));
-
-      toast({
-        title: "Partition unlocked",
-        description: `"${partition.title}" is now available for viewing`
-      });
-
-    } catch (error: any) {
-      console.error('Unlock error:', error);
-      toast({
-        title: "Unlock failed",
-        description: error.message || "Failed to unlock partition",
-        variant: "destructive"
-      });
-    }
-  };
 
   const deletePartition = async (partitionId: string) => {
     if (!user || !isAdmin) return;
@@ -438,11 +392,6 @@ const PartitionManagement = () => {
                     {partition.is_big_library && (
                       <Badge variant="default">Big Library</Badge>
                     )}
-                    {partition.is_downloaded && (
-                      <Badge variant="outline" className="border-green-500 text-green-700">
-                        Unlocked
-                      </Badge>
-                    )}
                   </div>
 
                   {partition.tags && partition.tags.length > 0 && (
@@ -471,27 +420,15 @@ const PartitionManagement = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    {!partition.is_downloaded ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => unlockPartition(partition)}
-                        className="flex-1 gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Unlock
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => window.open(`/partition/${partition.id}`, '_blank')}
-                        className="flex-1 gap-2"
-                      >
-                        <FileText className="h-4 w-4" />
-                        View
-                      </Button>
-                    )}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => window.open(`/partition/${partition.id}`, '_blank')}
+                      className="flex-1 gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
