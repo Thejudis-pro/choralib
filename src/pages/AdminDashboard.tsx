@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -242,7 +242,9 @@ const AdminDashboard = () => {
                     </p>
                     <div className="flex gap-2 mt-4">
                       <Button size="sm" variant="outline">Manage</Button>
-                      <Button size="sm" variant="outline">View Partitions</Button>
+                      <Link to={`/partitions/${choir.id}`}>
+                        <Button size="sm" variant="outline">View Partitions</Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>

@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import PartitionManagement from "./pages/PartitionManagement";
+import PartitionDetail from "./pages/PartitionDetail";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/partitions" element={<PartitionManagement />} />
+            <Route path="/partitions/:choirId" element={<PartitionManagement />} />
+            <Route path="/partition/:id" element={<PartitionDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

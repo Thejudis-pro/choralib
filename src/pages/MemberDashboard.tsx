@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -188,9 +188,11 @@ const MemberDashboard = () => {
                     <p className="text-sm text-muted-foreground mb-4">
                       {choir.description || 'No description available'}
                     </p>
-                    <Button size="sm" className="w-full">
-                      View Partitions
-                    </Button>
+                    <Link to={`/partitions/${choir.id}`}>
+                      <Button size="sm" className="w-full">
+                        View Partitions
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
@@ -250,33 +252,39 @@ const MemberDashboard = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">Quick Actions</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
-              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                <BookOpen className="h-8 w-8 text-primary mb-2" />
-                <h3 className="font-semibold mb-1">Browse Partitions</h3>
-                <p className="text-sm text-muted-foreground">
-                  Explore all available sheet music
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
-              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                <Heart className="h-8 w-8 text-primary mb-2" />
-                <h3 className="font-semibold mb-1">My Favorites</h3>
-                <p className="text-sm text-muted-foreground">
-                  View your saved partitions
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
-              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                <Download className="h-8 w-8 text-primary mb-2" />
-                <h3 className="font-semibold mb-1">Download History</h3>
-                <p className="text-sm text-muted-foreground">
-                  See your recent downloads
-                </p>
-              </CardContent>
-            </Card>
+            <Link to="/partitions">
+              <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <BookOpen className="h-8 w-8 text-primary mb-2" />
+                  <h3 className="font-semibold mb-1">Browse Partitions</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Explore all available sheet music
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/favorites">
+              <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <Heart className="h-8 w-8 text-primary mb-2" />
+                  <h3 className="font-semibold mb-1">My Favorites</h3>
+                  <p className="text-sm text-muted-foreground">
+                    View your saved partitions
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/downloads">
+              <Card className="hover:shadow-elegant transition-shadow cursor-pointer">
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <Download className="h-8 w-8 text-primary mb-2" />
+                  <h3 className="font-semibold mb-1">Download History</h3>
+                  <p className="text-sm text-muted-foreground">
+                    See your recent downloads
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </section>
       </main>
