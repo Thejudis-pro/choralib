@@ -63,9 +63,14 @@ const PartitionDetail = () => {
         .from('partitions')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        setPartition(null);
+        setIsLoading(false);
+        return;
+      }
 
       // Fetch uploader info separately
       let uploaderName = 'Unknown';
