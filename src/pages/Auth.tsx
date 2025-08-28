@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Music } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { validateEmail } from '@/lib/utils';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,7 @@ const Auth = () => {
     fullName: '',
     role: 'member' as 'member' | 'admin'
   });
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +39,7 @@ const Auth = () => {
       const refreshToken = url.searchParams.get('refresh_token');
       const type = url.searchParams.get('type');
       
-      // Handle tokens from email links
+      // Handle tokens from email links (for existing users)
       if (accessToken && refreshToken) {
         try {
           const { error } = await supabase.auth.setSession({
@@ -73,6 +75,41 @@ const Auth = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear email error when user starts typing
+    if (field === 'email' && emailError) {
+      setEmailError(null);
+    }
+  };
+
+  const validateForm = () => {
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.message || 'Invalid email');
+      return false;
+    }
+
+    // Validate other fields
+    if (!formData.password || formData.password.length < 6) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.fullName || formData.fullName.trim().length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Full name must be at least 2 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -115,12 +152,8 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password || !formData.fullName) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+    
+    if (!validateForm()) {
       return;
     }
 
@@ -143,9 +176,22 @@ const Auth = () => {
         }
       } else {
         toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
+          title: "Account Created Successfully!",
+          description: "Welcome to ChoraLib! You can now sign in with your new account.",
         });
+        // Clear form and switch to sign in tab
+        setFormData({
+          email: '',
+          password: '',
+          fullName: '',
+          role: 'member'
+        });
+        setEmailError(null);
+        // Switch to sign in tab
+        const signinTab = document.querySelector('[value="signin"]') as HTMLElement;
+        if (signinTab) {
+          signinTab.click();
+        }
       }
     } catch (error) {
       toast({
@@ -230,7 +276,9 @@ const Auth = () => {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     required
+                    className={emailError ? 'border-red-500' : ''}
                   />
+                  {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>

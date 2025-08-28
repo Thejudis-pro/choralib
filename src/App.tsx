@@ -11,6 +11,9 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import PartitionManagement from "./pages/PartitionManagement";
 import PartitionDetail from "./pages/PartitionDetail";
+import ChoirManagement from "./pages/ChoirManagement";
+import Favorites from "./pages/Favorites";
+import DownloadHistory from "./pages/DownloadHistory";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +32,9 @@ const App = () => (
             <Route path="/partitions" element={<PartitionManagement />} />
             <Route path="/partitions/:choirId" element={<PartitionManagement />} />
             <Route path="/partition/:id" element={<PartitionDetail />} />
+            <Route path="/choir-management/:choirId" element={<ChoirManagement />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/downloads" element={<DownloadHistory />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

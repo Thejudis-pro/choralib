@@ -192,6 +192,18 @@ const PartitionDetail = () => {
     }
   };
 
+  const handlePartitionView = async () => {
+    if (!user || !partition) return;
+
+    try {
+      // Track the view using the partition service
+      // For now, we'll just log it - you can implement the actual tracking later
+      console.log('Partition viewed:', partition.id, 'by user:', user.id);
+    } catch (error) {
+      console.error('Error tracking partition view:', error);
+    }
+  };
+
 
   if (loading || isLoading) {
     return (

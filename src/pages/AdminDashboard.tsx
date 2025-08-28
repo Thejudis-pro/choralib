@@ -233,15 +233,38 @@ const AdminDashboard = () => {
                       {choir.name}
                     </CardTitle>
                     <CardDescription>
-                      Code: <span className="font-mono font-semibold">{choir.code}</span>
+                      Code: <span className="font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded">{choir.code}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-4">
                       {choir.description || 'No description available'}
                     </p>
-                    <div className="flex gap-2 mt-4">
-                      <Button size="sm" variant="outline">Manage</Button>
+                    <div className="bg-muted/50 p-3 rounded-lg mb-4">
+                      <p className="text-xs text-muted-foreground mb-2">Share this code with potential members:</p>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-lg font-bold text-primary bg-background px-3 py-2 rounded border">
+                          {choir.code}
+                        </code>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(choir.code);
+                            toast({
+                              title: "Code copied!",
+                              description: "Choir code copied to clipboard",
+                            });
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link to={`/choir-management/${choir.id}`}>
+                        <Button size="sm" variant="outline">Manage</Button>
+                      </Link>
                       <Link to={`/partitions/${choir.id}`}>
                         <Button size="sm" variant="outline">View Partitions</Button>
                       </Link>

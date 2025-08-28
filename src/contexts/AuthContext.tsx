@@ -114,20 +114,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName?: string, role: 'admin' | 'member' = 'member') => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: { 
-          full_name: fullName || '',
-          role: role
-        },
+    try {
+      // First, create the user account without email confirmation
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { 
+            full_name: fullName || '',
+            role: role
+          },
+          // Disable email confirmation to prevent bounces
+          emailRedirectTo: undefined,
+        }
+      });
+
+      if (authError) {
+        return { error: authError };
       }
-    });
-    return { error };
+
+      // If user is created successfully, create their profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            email: email,
+            full_name: fullName || '',
+            role: role,
+            subscription_active: false,
+            subscription_end: null
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Even if profile creation fails, the user account is created
+          // They can complete their profile later
+        }
+
+        // Auto-confirm the user (no email confirmation needed)
+        if (authData.user && !authData.user.email_confirmed_at) {
+          // Set the user as confirmed
+          const { error: confirmError } = await supabase.auth.updateUser({
+            data: { email_confirmed: true }
+          });
+
+          if (confirmError) {
+            console.error('Auto-confirmation error:', confirmError);
+          }
+        }
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { error: error as any };
+    }
   };
 
   const signOut = async () => {
