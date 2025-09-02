@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import PDFViewer from '@/components/PDFViewer';
+import { partitionService } from '@/lib/partitionService';
 
 interface Partition {
   id: string;
@@ -49,6 +50,8 @@ const PartitionDetail = () => {
     if (user && id) {
       fetchPartition();
       checkFavoriteStatus();
+      // Track partition view
+      partitionService.trackPartitionView(id, user.id);
     }
   }, [user, id]);
 

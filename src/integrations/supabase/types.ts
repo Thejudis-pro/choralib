@@ -102,6 +102,36 @@ export type Database = {
           },
         ]
       }
+      partition_access: {
+        Row: {
+          accessed_at: string
+          created_at: string
+          download_count: number
+          id: string
+          last_viewed: string
+          partition_id: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          created_at?: string
+          download_count?: number
+          id?: string
+          last_viewed?: string
+          partition_id: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          created_at?: string
+          download_count?: number
+          id?: string
+          last_viewed?: string
+          partition_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partitions: {
         Row: {
           choir_id: string | null

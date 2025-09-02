@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, Download, Eye, Trash2, ArrowLeft, Music } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Heart, Music, User, Calendar, X } from 'lucide-react';
 
 interface FavoritePartition {
   id: string;
@@ -16,55 +15,59 @@ interface FavoritePartition {
   partitions: {
     id: string;
     title: string;
-    composer: string | null;
+    composer: string;
     voice_type: string;
-    choir_id: string | null;
+    file_path: string;
+    created_at: string;
     choirs: {
       name: string;
-    } | null;
+    };
   };
 }
 
 const Favorites = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoritePartition[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchFavorites = async () => {
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('favorites')
-          .select(`
-            *,
-            partitions (
-              *,
-              choirs (name)
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setFavorites(data || []);
-      } catch (error) {
-        console.error('Error fetching favorites:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load favorites",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFavorites();
+    if (user) {
+      loadFavorites();
+    }
   }, [user]);
+
+  const loadFavorites = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('favorites')
+        .select(`
+          *,
+          partitions (
+            id,
+            title,
+            composer,
+            voice_type,
+            file_path,
+            created_at,
+            choirs (
+              name
+            )
+          )
+        `)
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setFavorites(data || []);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      toast.error('Failed to load favorites');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const removeFavorite = async (favoriteId: string) => {
     try {
@@ -74,164 +77,116 @@ const Favorites = () => {
         .eq('id', favoriteId);
 
       if (error) throw error;
-
-      setFavorites(prev => prev.filter(fav => fav.id !== favoriteId));
       
-      toast({
-        title: "Success",
-        description: "Removed from favorites",
-      });
+      setFavorites(prev => prev.filter(f => f.id !== favoriteId));
+      toast.success('Removed from favorites');
     } catch (error) {
       console.error('Error removing favorite:', error);
-      toast({
-        title: "Error",
-        description: "Failed to remove from favorites",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const downloadPartition = async (partition: FavoritePartition['partitions']) => {
-    try {
-      // This would typically trigger a download from your storage service
-      // For now, we'll just show a success message
-      toast({
-        title: "Download Started",
-        description: `Downloading ${partition.title}`,
-      });
-    } catch (error) {
-      console.error('Error downloading partition:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download partition",
-        variant: "destructive",
-      });
+      toast.error('Failed to remove favorite');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-accent rounded w-1/4"></div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-48 bg-accent rounded"></div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-8">Loading favorites...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/dashboard">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Heart className="h-8 w-8 text-primary fill-current" />
             <h1 className="text-3xl font-bold">My Favorites</h1>
-            <p className="text-muted-foreground">
-              Your saved partitions and sheet music
-            </p>
           </div>
+          <Button variant="outline" onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
+          </Button>
         </div>
 
-        {favorites.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Favorites List */}
+        {favorites.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No favorites yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Start exploring partitions and add them to your favorites!
+              </p>
+              <Button onClick={() => navigate('/dashboard')}>
+                Browse Partitions
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
             {favorites.map((favorite) => (
-              <Card key={favorite.id} className="hover:shadow-elegant transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500 fill-current" />
-                    {favorite.partitions.title}
-                  </CardTitle>
-                  <CardDescription>
-                    {favorite.partitions.composer && `by ${favorite.partitions.composer}`}
-                    {favorite.partitions.choirs && (
-                      <span className="block text-xs text-muted-foreground mt-1">
-                        From: {favorite.partitions.choirs.name}
-                      </span>
-                    )}
-                  </CardDescription>
+              <Card key={favorite.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Music className="h-5 w-5" />
+                        {favorite.partitions.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span className="text-sm">{favorite.partitions.composer}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span className="text-sm">
+                            Added {new Date(favorite.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFavorite(favorite.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant="outline">{favorite.partitions.voice_type}</Badge>
-                    <p className="text-xs text-muted-foreground">
-                      Added {new Date(favorite.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Link to={`/partition/${favorite.partitions.id}`}>
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3 mr-2" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{favorite.partitions.voice_type}</Badge>
+                      <Badge variant="outline">{favorite.partitions.choirs?.name}</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/partition/${favorite.partitions.id}`)}
+                      >
                         View
                       </Button>
-                    </Link>
-                    
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => downloadPartition(favorite.partitions)}
-                    >
-                      <Download className="h-3 w-3 mr-2" />
-                      Download
-                    </Button>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Trash2 className="h-3 w-3 mr-2" />
-                          Remove
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove from Favorites</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to remove "{favorite.partitions.title}" from your favorites?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => removeFavorite(favorite.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        ) : (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-              <Heart className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No favorites yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start exploring partitions and add your favorites to see them here
+        )}
+
+        {/* Stats */}
+        {favorites.length > 0 && (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">
+                You have <span className="font-semibold text-foreground">{favorites.length}</span> favorite partition{favorites.length !== 1 ? 's' : ''}
               </p>
-              <Link to="/partitions">
-                <Button>
-                  <Music className="h-4 w-4 mr-2" />
-                  Browse Partitions
-                </Button>
-              </Link>
             </CardContent>
           </Card>
         )}
