@@ -8,7 +8,7 @@ interface Profile {
   user_id: string;
   email: string;
   full_name: string | null;
-  role: 'admin' | 'member';
+  role: string;
   subscription_active: boolean;
   subscription_end: string | null;
 }
@@ -19,7 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
-  signUp: (email: string, password: string, fullName?: string, role?: 'admin' | 'member') => Promise<{ error?: any }>;
+  signUp: (email: string, password: string, fullName?: string, role?: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
   refreshProfile: (userId?: string) => Promise<Profile | null | undefined>;
 }
@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      setProfile(data);
-      return data;
+      setProfile(data as Profile | null);
+      return data as Profile | null;
     } catch (error) {
       console.error('Error refreshing profile:', error);
       return null;
@@ -65,28 +65,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch profile immediately without setTimeout
           refreshProfile(session.user.id);
         } else {
           setProfile(null);
-        }
-        
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log('User authenticated:', event);
         }
         
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -101,67 +94,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (!error) {
-      // Profile will be refreshed by auth state change listener
-    }
-    
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, role: 'admin' | 'member' = 'member') => {
+  const signUp = async (email: string, password: string, fullName?: string, role: string = 'member') => {
     try {
-      // First, create the user account without email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { 
-            full_name: fullName || '',
-            role: role
-          },
-          // Disable email confirmation to prevent bounces
-          emailRedirectTo: undefined,
+          data: { full_name: fullName || '', role },
         }
       });
 
-      if (authError) {
-        return { error: authError };
-      }
+      if (authError) return { error: authError };
 
-      // If user is created successfully, create their profile
       if (authData.user) {
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             user_id: authData.user.id,
-            email: email,
+            email,
             full_name: fullName || '',
-            role: role,
+            role,
             subscription_active: false,
-            subscription_end: null
-          });
+          } as any);
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
-          // Even if profile creation fails, the user account is created
-          // They can complete their profile later
-        }
-
-        // Auto-confirm the user (no email confirmation needed)
-        if (authData.user && !authData.user.email_confirmed_at) {
-          // Set the user as confirmed
-          const { error: confirmError } = await supabase.auth.updateUser({
-            data: { email_confirmed: true }
-          });
-
-          if (confirmError) {
-            console.error('Auto-confirmation error:', confirmError);
-          }
         }
       }
 
@@ -180,14 +141,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const value = {
-    user,
-    session,
-    profile,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    refreshProfile,
+    user, session, profile, loading,
+    signIn, signUp, signOut, refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

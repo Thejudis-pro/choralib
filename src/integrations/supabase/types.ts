@@ -14,7 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      choir_members: {
+        Row: {
+          choir_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          choir_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          choir_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "choir_members_choir_id_fkey"
+            columns: ["choir_id"]
+            isOneToOne: false
+            referencedRelation: "choirs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      choirs: {
+        Row: {
+          admin_id: string
+          choir_code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          choir_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          choir_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          partition_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partition_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partition_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_partition_id_fkey"
+            columns: ["partition_id"]
+            isOneToOne: false
+            referencedRelation: "partitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partition_access: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          id: string
+          partition_id: string
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string
+          id?: string
+          partition_id: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          id?: string
+          partition_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partition_access_partition_id_fkey"
+            columns: ["partition_id"]
+            isOneToOne: false
+            referencedRelation: "partitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partitions: {
+        Row: {
+          category: string | null
+          choir_id: string | null
+          composer: string | null
+          created_at: string
+          description: string | null
+          download_count: number
+          file_name: string | null
+          file_url: string | null
+          id: string
+          is_public: boolean
+          title: string
+          updated_at: string
+          uploaded_by: string
+          view_count: number
+        }
+        Insert: {
+          category?: string | null
+          choir_id?: string | null
+          composer?: string | null
+          created_at?: string
+          description?: string | null
+          download_count?: number
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          is_public?: boolean
+          title: string
+          updated_at?: string
+          uploaded_by: string
+          view_count?: number
+        }
+        Update: {
+          category?: string | null
+          choir_id?: string | null
+          composer?: string | null
+          created_at?: string
+          description?: string | null
+          download_count?: number
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          is_public?: boolean
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partitions_choir_id_fkey"
+            columns: ["choir_id"]
+            isOneToOne: false
+            referencedRelation: "choirs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string
+          subscription_active: boolean
+          subscription_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          subscription_active?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          subscription_active?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
