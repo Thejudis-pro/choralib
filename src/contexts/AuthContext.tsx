@@ -20,10 +20,14 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string, fullName?: string, role?: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
-  refreshProfile: (userId?: string) => Promise<Profile | null | undefined>;
+  refreshProfile: (targetUser?: User) => Promise<Profile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const normalizeRole = (role: unknown): 'admin' | 'member' => {
+  return role === 'admin' ? 'admin' : 'member';
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -39,58 +43,95 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshProfile = async (userId?: string) => {
-    const targetUserId = userId || user?.id;
-    if (!targetUserId) return;
-    
+  const createProfileForUser = useCallback(async (targetUser: User) => {
+    const fallbackRole = normalizeRole(targetUser.user_metadata?.role);
+    const fallbackName = typeof targetUser.user_metadata?.full_name === 'string'
+      ? targetUser.user_metadata.full_name
+      : null;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert({
+        user_id: targetUser.id,
+        email: targetUser.email || `${targetUser.id}@local.user`,
+        full_name: fallbackName,
+        role: fallbackRole,
+        subscription_active: false,
+      } as any)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error creating fallback profile:', error);
+      return null;
+    }
+
+    const createdProfile = data as Profile;
+    setProfile(createdProfile);
+    return createdProfile;
+  }, []);
+
+  const refreshProfile = useCallback(async (targetUser?: User) => {
+    if (!targetUser) return null;
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
+        .eq('user_id', targetUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error('Error fetching profile:', error);
-        return;
+        return null;
       }
 
-      setProfile(data as Profile | null);
-      return data as Profile | null;
+      const existingProfile = (data?.[0] ?? null) as Profile | null;
+      if (existingProfile) {
+        setProfile(existingProfile);
+        return existingProfile;
+      }
+
+      return await createProfileForUser(targetUser);
     } catch (error) {
       console.error('Error refreshing profile:', error);
       return null;
     }
-  };
+  }, [createProfileForUser]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          refreshProfile(session.user.id);
+      async (_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+
+        if (nextSession?.user) {
+          await refreshProfile(nextSession.user);
         } else {
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        refreshProfile(session.user.id);
+    const initializeSession = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+
+      if (currentSession?.user) {
+        await refreshProfile(currentSession.user);
       }
+
       setLoading(false);
-    });
+    };
+
+    initializeSession();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [refreshProfile]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
