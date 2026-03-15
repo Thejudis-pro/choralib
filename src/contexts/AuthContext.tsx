@@ -101,31 +101,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [createProfileForUser]);
 
   useEffect(() => {
+    const handleSession = (nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user) {
+        void refreshProfile(nextSession.user);
+      } else {
+        setProfile(null);
+      }
+
+      setLoading(false);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, nextSession) => {
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
-
-        if (nextSession?.user) {
-          await refreshProfile(nextSession.user);
-        } else {
-          setProfile(null);
-        }
-
-        setLoading(false);
+      (_event, nextSession) => {
+        handleSession(nextSession);
       }
     );
 
     const initializeSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-
-      if (currentSession?.user) {
-        await refreshProfile(currentSession.user);
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        handleSession(currentSession);
+      } catch (error) {
+        console.error('Error initializing session:', error);
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     initializeSession();
