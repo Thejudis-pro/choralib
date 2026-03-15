@@ -72,14 +72,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const refreshProfile = useCallback(async (targetUser?: User) => {
-    const resolvedUser = targetUser || user;
-    if (!resolvedUser) return null;
+    if (!targetUser) return null;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', resolvedUser.id)
+        .eq('user_id', targetUser.id)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -94,12 +93,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return existingProfile;
       }
 
-      return await createProfileForUser(resolvedUser);
+      return await createProfileForUser(targetUser);
     } catch (error) {
       console.error('Error refreshing profile:', error);
       return null;
     }
-  }, [createProfileForUser, user]);
+  }, [createProfileForUser]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
